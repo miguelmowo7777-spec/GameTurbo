@@ -1,0 +1,32 @@
+
+name: Build Game Turbo
+on:
+  push:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Preparar proyecto (zip o carpetas)
+        run: |
+          mkdir proj
+          if [ -f GameTurbo.zip ]; then unzip -q GameTurbo.zip -d proj; else tar cf - --exclude=./proj --exclude=./.git . | tar xf - -C proj; fi
+          ls proj
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.9
+      - name: Compilar
+        working-directory: proj
+        run: gradle assembleDebug --no-daemon --stacktrace
+      - name: Renombrar APK
+        run: mkdir -p out && cp proj/app/build/outputs/apk/debug/app-debug.apk out/GameTurbo.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GameTurbo-APK
+          path: out/GameTurbo.apk
+          
